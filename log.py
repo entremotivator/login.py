@@ -2,56 +2,71 @@ import streamlit as st
 from wordpress_auth import WordpressAuth
 
 def get_user_input():
-    with st.sidebar:
-        st.title("Configuration Settings")
-        base_url = st.text_input("WordPress Site URL", placeholder="https://vipbusinesscredit.com/")
-        api_key = st.text_input("API Key", type="password")
-        return base_url, api_key
+    """Retrieve and validate user configuration settings."""
+    st.sidebar.title("Configuration Settings")
+    base_url = st.sidebar.text_input("WordPress Site URL", placeholder="https://vipbusinesscredit.com/")
+    api_key = st.sidebar.text_input("API Key", type="password")
+    return base_url, api_key
 
-def main_page():
-    st.title("Welcome to the Application")
-    st.write("This is the main content of the application.")
-    # Additional main page content can be added here.
-
-def login_page(auth):
-    st.title("Please Log In")
-    with st.form(key='login_form'):
-        username = st.text_input('Username')
-        password = st.text_input('Password', type='password')
-        submit_button = st.form_submit_button(label='Log In')
-
-        if submit_button:
-            token = auth.get_token(username, password)
-            if token and auth.verify_token(token):
-                st.session_state['token'] = token  # Store the token in the session state
-                st.success("Logged in successfully!")
-                st.experimental_rerun()  # Reload the page to show the main content
-            else:
-                st.error('Access denied. Please check your credentials and try again.')
-
-    # Add a link to the WordPress sign-up page
-    if st.button('Sign Up'):
-        sign_up_url = f"{base_url}/"  # Adjust this URL to your actual sign-up page
-        st.markdown(f"[Sign Up Here]({sign_up_url})", unsafe_allow_html=True)
-
-# Sidebar for configuration
-base_url, api_key = get_user_input()
-
-if base_url and api_key:
-    # Initialize the WordPressAuth instance
-    auth = WordpressAuth(api_key=api_key, base_url=base_url)
-    
-    if 'token' in st.session_state and auth.verify_token(st.session_state['token']):
-        main_page()  # User is authenticated, show the main page
-    else:
-        login_page(auth)  # Show the login form
-else:
-    st.warning("Please enter the WordPress site URL and API key in the sidebar.")
-
-# Optionally, add a logout button
-if 'token' in st.session_state:
-    if st.sidebar.button('Log Out'):
+def logout():
+    """Handle user logout."""
+    if 'token' in st.session_state:
         del st.session_state['token']  # Remove the token from session state
         st.experimental_rerun()  # Reload the page to show the login form again
 
+# Use Streamlit secrets for sensitive data (ensure secrets.toml is configured)
+base_url = st.secrets["base_url"]
+api_key = st.secrets["api_key"]
 
+# Initialize the WordPressAuth instance
+auth = WordpressAuth(api_key=api_key, base_url=base_url)
+
+# Create a page navigation selector
+page = st.sidebar.selectbox("Select Page", ["Login", "Main", "Additional", "Page 4", "Page 5"])
+
+# Route to different pages based on selection
+if page == "Login":
+    import pages.login as login
+    if 'token' in st.session_state and auth.verify_token(st.session_state['token']):
+        st.sidebar.success("You are already logged in.")
+        st.sidebar.button("Log Out", on_click=logout)
+        st.sidebar.markdown("---")
+        st.write("You are already logged in. Select a different page or log out.")
+    else:
+        login.render(auth, base_url)
+elif page == "Main":
+    import pages.main as main
+    if 'token' in st.session_state and auth.verify_token(st.session_state['token']):
+        main.render()
+    else:
+        st.warning("You need to log in to access this page.")
+        import pages.login as login
+        login.render(auth, base_url)
+elif page == "Additional":
+    import pages.additional as additional
+    if 'token' in st.session_state and auth.verify_token(st.session_state['token']):
+        additional.render()
+    else:
+        st.warning("You need to log in to access this page.")
+        import pages.login as login
+        login.render(auth, base_url)
+elif page == "Page 4":
+    import pages.page4 as page4
+    if 'token' in st.session_state and auth.verify_token(st.session_state['token']):
+        page4.render()
+    else:
+        st.warning("You need to log in to access this page.")
+        import pages.login as login
+        login.render(auth, base_url)
+elif page == "Page 5":
+    import pages.page5 as page5
+    if 'token' in st.session_state and auth.verify_token(st.session_state['token']):
+        page5.render()
+    else:
+        st.warning("You need to log in to access this page.")
+        import pages.login as login
+        login.render(auth, base_url)
+
+# Optional logout button
+if 'token' in st.session_state:
+    st.sidebar.button("Log Out", on_click=logout)

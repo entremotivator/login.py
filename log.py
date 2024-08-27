@@ -31,7 +31,7 @@ def login_page(auth):
 
     # Add a link to the WordPress sign-up page
     if st.button('Sign Up'):
-        sign_up_url = f"{base_url}/wp-login.php?action=register"  # Adjust this URL to your actual sign-up page
+        sign_up_url = f"{base_url}/"  # Adjust this URL to your actual sign-up page
         st.markdown(f"[Sign Up Here]({sign_up_url})", unsafe_allow_html=True)
 
 # Sidebar for configuration

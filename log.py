@@ -4,7 +4,7 @@ from wordpress_auth import WordpressAuth
 def get_user_input():
     with st.sidebar:
         st.title("Configuration Settings")
-        base_url = st.text_input("WordPress Site URL", placeholder="https://yourwordpressurl.com")
+        base_url = st.text_input("WordPress Site URL", placeholder="https://vipbusinesscredit.com/")
         api_key = st.text_input("API Key", type="password")
         return base_url, api_key
 
@@ -19,7 +19,6 @@ def login_page(auth):
         username = st.text_input('Username')
         password = st.text_input('Password', type='password')
         submit_button = st.form_submit_button(label='Log In')
-        sign_up_button = st.form_submit_button(label='Sign Up')
 
         if submit_button:
             token = auth.get_token(username, password)
@@ -30,29 +29,10 @@ def login_page(auth):
             else:
                 st.error('Access denied. Please check your credentials and try again.')
 
-        if sign_up_button:
-            st.session_state['sign_up'] = True
-            st.experimental_rerun()  # Reload the page to show the sign-up form
-
-def sign_up_page(auth):
-    st.title("Sign Up")
-    with st.form(key='sign_up_form'):
-        username = st.text_input('Username')
-        email = st.text_input('Email')
-        password = st.text_input('Password', type='password')
-        confirm_password = st.text_input('Confirm Password', type='password')
-        submit_button = st.form_submit_button(label='Register')
-
-        if submit_button:
-            if password == confirm_password:
-                response = auth.sign_up(username, email, password)
-                if response.get('success'):
-                    st.success("Registration successful! Please log in.")
-                    st.session_state['sign_up'] = False
-                else:
-                    st.error(f"Registration failed: {response.get('message')}")
-            else:
-                st.error("Passwords do not match.")
+    # Add a link to the WordPress sign-up page
+    if st.button('Sign Up'):
+        sign_up_url = f"{base_url}/wp-login.php?action=register"  # Adjust this URL to your actual sign-up page
+        st.markdown(f"[Sign Up Here]({sign_up_url})", unsafe_allow_html=True)
 
 # Sidebar for configuration
 base_url, api_key = get_user_input()
@@ -61,9 +41,7 @@ if base_url and api_key:
     # Initialize the WordPressAuth instance
     auth = WordpressAuth(api_key=api_key, base_url=base_url)
     
-    if 'sign_up' in st.session_state and st.session_state['sign_up']:
-        sign_up_page(auth)  # Show the sign-up form
-    elif 'token' in st.session_state and auth.verify_token(st.session_state['token']):
+    if 'token' in st.session_state and auth.verify_token(st.session_state['token']):
         main_page()  # User is authenticated, show the main page
     else:
         login_page(auth)  # Show the login form
@@ -75,4 +53,5 @@ if 'token' in st.session_state:
     if st.sidebar.button('Log Out'):
         del st.session_state['token']  # Remove the token from session state
         st.experimental_rerun()  # Reload the page to show the login form again
+
 
